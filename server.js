@@ -46,13 +46,13 @@ app.post('/register', (req, res) => {
     }
     console.log(req.body)
     console.log(req.body.password)
-    if(req.body.username == undefined || req.body.username == "") {
+    if (req.body.username == undefined || req.body.username == "") {
         err.meta.message = "Username not entered. Please enter a user name."
         res.status(400).send(err)
         return;
     }
 
-    if(req.body.password == undefined || req.body.password == "") {
+    if (req.body.password == undefined || req.body.password == "") {
         err.meta.message = "Password Field is Empty. Please enter a password."
         res.status(400).send(err)
         return;
@@ -84,7 +84,7 @@ app.post('/register', (req, res) => {
                 return;
             }
             err.meta.message = "Succesfully Inserted"
-            err.meta.status = true 
+            err.meta.status = true
             res.status(200).send(err)
         })
 
@@ -100,13 +100,13 @@ app.post('/login', (req, res) => {
     }
     console.log(req.body)
     console.log(req.body.password)
-    if(req.body.username == undefined || req.body.username == "") {
+    if (req.body.username == undefined || req.body.username == "") {
         err.meta.message = "Username not entered. Please enter a user name."
         res.status(400).send(err)
         return;
     }
 
-    if(req.body.password == undefined || req.body.password == "") {
+    if (req.body.password == undefined || req.body.password == "") {
         err.meta.message = "Password Field is Empty. Please enter a password."
         res.status(400).send(err)
         return;
@@ -116,25 +116,36 @@ app.post('/login', (req, res) => {
         password: req.body.password
     }
 
-    db.collection('users').findOne({username: obj.username, password: obj.password}, 
+    db.collection('users').findOne({ username: obj.username, password: obj.password },
         (error, result) => {
-            if(error) {
+            if (error) {
                 err.meta.message = error
                 res.status(500).send(err)
                 return;
             }
-            if(!result) {
+            if (!result) {
                 err.meta.message = "Invalid Username or Password"
                 res.status(401).send(err)
                 return
             }
-            err.meta.status = true
-            err.meta.message = "Succesful Login"
-            err.data = {
-                sessionToken: uuid()
-            }
-            res.status(200).send(err)
-            return
+            let uid = uuid()
+            db.collection('users').update({ username: obj.username },
+                {
+                    $set: {
+                        sessionToken: uid
+                    }
+                }, { upsert: true }, (e, r) => {
+                    if (e) {
+                        err.meta.message = e
+                        res.status(500).send(err)
+                    }
+                    err.meta.status = true
+                    err.meta.message = "Succesful Login"
+                    err.data = {
+                        sessionToken: uid
+                    }
+                    res.status(200).send(err)
+                })
         })
 })
 
