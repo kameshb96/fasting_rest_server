@@ -6,7 +6,7 @@ const url = 'mongodb://127.0.0.1:27017'
 app.use(bodyParser.json())
 app.use(express.static('public'))
 app.set('view engine', 'ejs')
-
+const uuid = require('uuid/v4')
 app.use(bodyParser.urlencoded({ extended: true }))
 var quotes;
 var db;
@@ -89,6 +89,53 @@ app.post('/register', (req, res) => {
         })
 
     })
+})
+
+app.post('/login', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: "Invalid Username"
+        }
+    }
+    console.log(req.body)
+    console.log(req.body.password)
+    if(req.body.username == undefined || req.body.username == "") {
+        err.meta.message = "Username not entered. Please enter a user name."
+        res.status(400).send(err)
+        return;
+    }
+
+    if(req.body.password == undefined || req.body.password == "") {
+        err.meta.message = "Password Field is Empty. Please enter a password."
+        res.status(400).send(err)
+        return;
+    }
+    var obj = {
+        username: req.body.username.trim(),
+        password: req.body.password
+    }
+
+    db.collection('users').findOne({username: obj.username, password: obj.password}, 
+        (error, result) => {
+            if(error) {
+                err.meta.message = error
+                res.status(500).send(err)
+                return;
+            }
+            if(!result) {
+                err.meta.message = "Invalid Username or Password"
+                res.status(401).send(err)
+                return
+            }
+            err.meta.status = true
+            err.meta.message = "Succesful Login"
+            err.data = {
+                sessionToken: uuid()
+            }
+            res.status(200).send(err)
+            return
+        })
 })
 
 app.put('/quotes', (req, res) => {
