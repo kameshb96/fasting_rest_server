@@ -14,28 +14,9 @@ app.get("/", function (req, res) {
     // console.log(req);
     // console.log(res);
     console.log("Hello world")
-    quotes = db.collection('quotes').find().toArray((err, result) => {
-        if (err) return console.log(err)
-        res.render('index.ejs', { quotes: result })
-    });
+    res.send("Welcome to fasting backend")
     // res.sendFile(__dirname + '/index.html')
 })
-
-app.post('/quotes', (req, res) => {
-    var obj = {
-        name: req.body.name.trim(),
-        quote: req.body.quote.trim()
-    }
-    console.log(req.body)
-    db.collection('quotes').insertOne(obj, (err, result) => {
-        if (err) return console.log(err)
-
-        console.log('saved to database')
-        res.redirect('/')
-    })
-})
-
-
 
 app.post('/register', (req, res) => {
     let err = {
@@ -149,20 +130,43 @@ app.post('/login', (req, res) => {
         })
 })
 
-app.put('/quotes', (req, res) => {
-    // Handle put request
-    db.collection('quotes')
-        .findOneAndUpdate({ name: 'Yoda' }, {
+
+
+app.put('/logout', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if(st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOneAndUpdate({sessionToken:st},
+        {
             $set: {
-                name: req.body.name,
-                quote: req.body.quote
+                sessionToken: ""
             }
-        }, {
-            sort: { _id: -1 },
-            upsert: true
-        }, (err, result) => {
-            if (err) return res.send(err)
-            res.send(result)
+        },
+        (error, result) => {
+            if(error) {
+                err.meta.message = error
+                res.status(500).send(error)
+                return
+            }
+            if(!result.lastErrorObject.updatedExisting) {
+                err.meta.message = "Invalid sessionToken"
+                res.status(403).send(err)
+                return
+            }
+            console.log("RESULT:", result)
+            err.meta.status = true
+            err.meta.message = "Sucessfully Logged Out"
+            res.status(200).send(err)
+            
         })
 })
 
@@ -218,24 +222,6 @@ app.put('/timerinfo', (req, res) => {
             err.meta.status = true
             err.meta.message = "TimerInfo updated"
             res.status(200).send(err)
-        })
-})
-
-app.delete('/quote', (req, res) => {
-    db.collection('quotes').findOneAndDelete({ name: req.body.name },
-        (err, result) => {
-            if (err) return res.send(500, err)
-            console.log(result)
-            res.send({ message: 'Darth vader quote deleted' })
-        })
-})
-
-app.delete('/quotes', (req, res) => {
-    db.collection('quotes').remove({ name: req.body.name },
-        (err, result) => {
-            if (err) return res.send(500, err)
-            console.log(result)
-            res.status(200).send({ message: 'All Vader quotes removed' })
         })
 })
 
