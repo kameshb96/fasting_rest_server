@@ -130,6 +130,108 @@ app.post('/login', (req, res) => {
         })
 })
 
+app.get('/completedFasts', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if(st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOne({sessionToken: st}, (error, result) => {
+        if(error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        if(!result) {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+            return
+        }
+        let id = result._id
+        db.collection('completedFasts').find({userId:id}).toArray((e, r) => {
+            if(e) {
+                err.meta.message = e
+                res.status(500).send(err)
+                return
+            }
+            err.meta.message = "Success"
+            err.meta.status = true
+            res.status(200).send(r)
+        })
+    })
+
+})
+
+app.post('/completedFast', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    if(req.body.chosenFast == undefined || req.body.chosenFast == "") {
+        err.meta.message = "No fast chosen. Please choose a fast."
+        res.status(400).send(err)
+        return
+    }
+
+    if(req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
+        err.meta.message = "No fastStartTime provided."
+        res.status(400).send(err)
+        return
+    }
+    var obj = {
+        chosenFast: req.body.chosenFast,
+        fastStartTime: req.body.fastStartTime
+    }
+    let st = req.headers.sessiontoken
+    if(st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOne({sessionToken:st}, (error, result) => {
+        if(error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        console.log(result)
+        if(result) {
+            obj.userId = result._id
+            db.collection('completedFasts').insertOne(obj, (error2, result2) => {
+                if(error2) {
+                    err.meta.message = error2
+                    res.status(500).send(err)
+                    return
+                }
+                console.log(result2.result)
+                if(result2.result.ok) {
+                    err.meta.message = "Succesfully entered completedFast"
+                    err.meta.status = true
+                    res.status(200).send(err)
+                }
+                else {
+                    err.meta.message = "Entry failed"
+                    err.meta.status = false
+                    res.status(500).send(err)
+                }
+            })
+        }
+        else {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+        }
+    })
+})
+
 
 
 app.put('/logout', (req, res) => {
