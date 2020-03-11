@@ -166,6 +166,61 @@ app.put('/quotes', (req, res) => {
         })
 })
 
+app.put('/timerinfo', (req, res) => {
+    //console.log(req.headers.sessiontoken)
+    //console.log(req.headers)
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    //req.body is obj. obj two fields: chosenFast and fastStartTime
+    if(req.body.chosenFast == undefined || req.body.chosenFast == "") {
+        err.meta.message = "No fast chosen. Please choose a fast."
+        res.status(400).send(err)
+        return
+    }
+
+    if(req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
+        err.meta.message = "No fastStartTime provided."
+        res.status(400).send(err)
+        return
+    }
+    var obj = {
+        chosenFast: req.body.chosenFast,
+        fastStartTime: req.body.fastStartTime
+    }
+    let st = req.headers.sessiontoken
+    if(st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOneAndUpdate({sessionToken: st}, 
+        {
+            $set:{
+                timerInfo: obj
+            }
+        },
+        (error, result) => {
+            if(error) {
+                err.meta.message = error
+                res.status(500).send(err)
+                return
+            }
+            if(!result.lastErrorObject.updatedExisting) {
+                err.meta.message = "Invalid sessionToken"
+                res.status(403).send(err)
+                return
+            }
+            console.log("RESULT:", result)
+            err.meta.status = true
+            err.meta.message = "TimerInfo updated"
+            res.status(200).send(err)
+        })
+})
+
 app.delete('/quote', (req, res) => {
     db.collection('quotes').findOneAndDelete({ name: req.body.name },
         (err, result) => {
