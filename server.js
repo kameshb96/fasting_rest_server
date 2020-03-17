@@ -332,34 +332,26 @@ app.put('/timerinfo', (req, res) => {
 
 app.get('/search', (req, res) => {
     console.log(req.query)
-    if(!req.query || !req.query.queue) {
+    console.log(req.query.q)
+    if(!req.query || !req.query.q) {
         res.send([])
         return
     }
-    let b = {
-        "appId":"f6038e67",
-        "appKey":"348bcbd07ddc7334af71c1eddefa65f9",  
-        "query":req.query.queue,
-        "fields":["item_name","brand_name","nf_calories","nf_serving_size_qty","nf_serving_size_unit","nf_protein"],
-        "sort":{
-          "field":"_score",
-          "order":"desc"
-        },
-        "filters":{
-          "item_type":2,
-          "nf_serving_size_unit": "g"
+    let tmp=`https://trackapi.nutritionix.com/v2/search/instant?query=${encodeURIComponent(req.query.q)}&common=false`
+    console.log(tmp)
+    fetch(tmp, {
+        method: 'GET',
+        headers: { 
+            'Content-Type': 'application/json',
+            'x-app-id': 'f6038e67',
+            'x-app-key': '348bcbd07ddc7334af71c1eddefa65f9'
         }
-      }
-    fetch('https://api.nutritionix.com/v1_1/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(b)
+        // body: JSON.stringify(b)
     }).then(response => {
         //console.log(response.json())
         response.json().then((r) => {
             // console.log(JSON.parse(r))
-            console.log(r)
-            console.log(r.hits[0].fields)
+            //console.log(r)
             res.send(r)
         }, (e) => {
             console.log(e)
@@ -367,6 +359,44 @@ app.get('/search', (req, res) => {
         // res.send('fofa')
     }).catch(err => { console.log(err); });
 })
+
+// app.get('/search', (req, res) => {
+//     console.log(req.query)
+//     if(!req.query || !req.query.queue) {
+//         res.send([])
+//         return
+//     }
+//     let b = {
+//         "appId":"f6038e67",
+//         "appKey":"348bcbd07ddc7334af71c1eddefa65f9",  
+//         "query":req.query.queue,
+//         "fields":["item_name","brand_name","nf_calories","nf_serving_size_qty","nf_serving_size_unit","nf_protein"],
+//         "sort":{
+//           "field":"_score",
+//           "order":"desc"
+//         },
+//         "filters":{
+//           "item_type":2,
+//           "nf_serving_size_unit": "g"
+//         }
+//       }
+//     fetch('https://api.nutritionix.com/v1_1/search', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify(b)
+//     }).then(response => {
+//         //console.log(response.json())
+//         response.json().then((r) => {
+//             // console.log(JSON.parse(r))
+//             console.log(r)
+//             console.log(r.hits[0].fields)
+//             res.send(r)
+//         }, (e) => {
+//             console.log(e)
+//         })
+//         // res.send('fofa')
+//     }).catch(err => { console.log(err); });
+// })
 
 MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
     // ... do something here
