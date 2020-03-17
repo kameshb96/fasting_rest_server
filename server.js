@@ -1,13 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser')
 const app = express();
+var cors = require('cors');
+let fetch = require('node-fetch');
 const MongoClient = require('mongodb').MongoClient
 const url = 'mongodb://127.0.0.1:27017'
 app.use(bodyParser.json())
 app.use(express.static('public'))
-app.set('view engine', 'ejs')
+// app.set('view engine', 'ejs')
 const uuid = require('uuid/v4')
 app.use(bodyParser.urlencoded({ extended: true }))
+app.use(cors())
 var quotes;
 var db;
 app.get("/", function (req, res) {
@@ -138,25 +141,25 @@ app.get('/completedFasts', (req, res) => {
         }
     }
     let st = req.headers.sessiontoken
-    if(st == undefined || st == "") {
+    if (st == undefined || st == "") {
         err.meta.message = "Please login again"
         res.status(403).send(err)
         return
     }
-    db.collection('users').findOne({sessionToken: st}, (error, result) => {
-        if(error) {
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
             err.meta.message = error
             res.status(500).send(err)
             return
         }
-        if(!result) {
+        if (!result) {
             err.meta.message = "Invalid sessionToken"
             res.status(403).send(err)
             return
         }
         let id = result._id
-        db.collection('completedFasts').find({userId:id}).toArray((e, r) => {
-            if(e) {
+        db.collection('completedFasts').find({ userId: id }).toArray((e, r) => {
+            if (e) {
                 err.meta.message = e
                 res.status(500).send(err)
                 return
@@ -176,13 +179,13 @@ app.post('/completedFast', (req, res) => {
             message: ""
         }
     }
-    if(req.body.chosenFast == undefined || req.body.chosenFast == "") {
+    if (req.body.chosenFast == undefined || req.body.chosenFast == "") {
         err.meta.message = "No fast chosen. Please choose a fast."
         res.status(400).send(err)
         return
     }
 
-    if(req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
+    if (req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
         err.meta.message = "No fastStartTime provided."
         res.status(400).send(err)
         return
@@ -192,28 +195,28 @@ app.post('/completedFast', (req, res) => {
         fastStartTime: req.body.fastStartTime
     }
     let st = req.headers.sessiontoken
-    if(st == undefined || st == "") {
+    if (st == undefined || st == "") {
         err.meta.message = "Please login again"
         res.status(403).send(err)
         return
     }
-    db.collection('users').findOne({sessionToken:st}, (error, result) => {
-        if(error) {
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
             err.meta.message = error
             res.status(500).send(err)
             return
         }
         console.log(result)
-        if(result) {
+        if (result) {
             obj.userId = result._id
             db.collection('completedFasts').insertOne(obj, (error2, result2) => {
-                if(error2) {
+                if (error2) {
                     err.meta.message = error2
                     res.status(500).send(err)
                     return
                 }
                 console.log(result2.result)
-                if(result2.result.ok) {
+                if (result2.result.ok) {
                     err.meta.message = "Succesfully entered completedFast"
                     err.meta.status = true
                     res.status(200).send(err)
@@ -242,24 +245,24 @@ app.put('/logout', (req, res) => {
         }
     }
     let st = req.headers.sessiontoken
-    if(st == undefined || st == "") {
+    if (st == undefined || st == "") {
         err.meta.message = "Please login again"
         res.status(403).send(err)
         return
     }
-    db.collection('users').findOneAndUpdate({sessionToken:st},
+    db.collection('users').findOneAndUpdate({ sessionToken: st },
         {
             $set: {
                 sessionToken: ""
             }
         },
         (error, result) => {
-            if(error) {
+            if (error) {
                 err.meta.message = error
                 res.status(500).send(error)
                 return
             }
-            if(!result.lastErrorObject.updatedExisting) {
+            if (!result.lastErrorObject.updatedExisting) {
                 err.meta.message = "Invalid sessionToken"
                 res.status(403).send(err)
                 return
@@ -268,7 +271,7 @@ app.put('/logout', (req, res) => {
             err.meta.status = true
             err.meta.message = "Sucessfully Logged Out"
             res.status(200).send(err)
-            
+
         })
 })
 
@@ -282,13 +285,13 @@ app.put('/timerinfo', (req, res) => {
         }
     }
     //req.body is obj. obj two fields: chosenFast and fastStartTime
-    if(req.body.chosenFast == undefined || req.body.chosenFast == "") {
+    if (req.body.chosenFast == undefined || req.body.chosenFast == "") {
         err.meta.message = "No fast chosen. Please choose a fast."
         res.status(400).send(err)
         return
     }
 
-    if(req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
+    if (req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
         err.meta.message = "No fastStartTime provided."
         res.status(400).send(err)
         return
@@ -298,24 +301,24 @@ app.put('/timerinfo', (req, res) => {
         fastStartTime: req.body.fastStartTime
     }
     let st = req.headers.sessiontoken
-    if(st == undefined || st == "") {
+    if (st == undefined || st == "") {
         err.meta.message = "Please login again"
         res.status(403).send(err)
         return
     }
-    db.collection('users').findOneAndUpdate({sessionToken: st}, 
+    db.collection('users').findOneAndUpdate({ sessionToken: st },
         {
-            $set:{
+            $set: {
                 timerInfo: obj
             }
         },
         (error, result) => {
-            if(error) {
+            if (error) {
                 err.meta.message = error
                 res.status(500).send(err)
                 return
             }
-            if(!result.lastErrorObject.updatedExisting) {
+            if (!result.lastErrorObject.updatedExisting) {
                 err.meta.message = "Invalid sessionToken"
                 res.status(403).send(err)
                 return
@@ -325,6 +328,44 @@ app.put('/timerinfo', (req, res) => {
             err.meta.message = "TimerInfo updated"
             res.status(200).send(err)
         })
+})
+
+app.get('/search', (req, res) => {
+    console.log(req.query)
+    if(!req.query || !req.query.queue) {
+        res.send([])
+        return
+    }
+    let b = {
+        "appId":"f6038e67",
+        "appKey":"348bcbd07ddc7334af71c1eddefa65f9",  
+        "query":req.query.queue,
+        "fields":["item_name","brand_name","nf_calories","nf_serving_size_qty","nf_serving_size_unit","nf_protein"],
+        "sort":{
+          "field":"_score",
+          "order":"desc"
+        },
+        "filters":{
+          "item_type":2,
+          "nf_serving_size_unit": "g"
+        }
+      }
+    fetch('https://api.nutritionix.com/v1_1/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(b)
+    }).then(response => {
+        //console.log(response.json())
+        response.json().then((r) => {
+            // console.log(JSON.parse(r))
+            console.log(r)
+            console.log(r.hits[0].fields)
+            res.send(r)
+        }, (e) => {
+            console.log(e)
+        })
+        // res.send('fofa')
+    }).catch(err => { console.log(err); });
 })
 
 MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
