@@ -172,6 +172,27 @@ app.get('/completedFasts', (req, res) => {
 
 })
 
+app.get('/validateToken', (req, res) => {
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        res.status(403).send({})
+        return
+    }
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
+            res.status(500).send(error)
+            return
+        }
+        console.log(result)
+        if(!result) {
+            res.status(403).send({})
+        }
+        else {
+            res.status(200).send({})
+        }
+    })
+})
+
 app.post('/completedFast', (req, res) => {
     let err = {
         meta: {
