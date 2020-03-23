@@ -235,6 +235,154 @@ app.post('/completedFast', (req, res) => {
     })
 })
 
+app.post('/fast', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    if (req.body.title == undefined || req.body.title == "") {
+        err.meta.message = "Please specify a title for the fast"
+        res.status(400).send(err)
+        return
+    }
+
+    if (req.body.duration == undefined) {
+        err.meta.message = "No duration provided. Please provide a duration for the fast"
+        res.status(400).send(err)
+        return
+    }
+
+    var obj = {
+        title: req.body.title,
+        duration: req.body.duration,
+        description: req.body.description ? req.body.description : "",
+        isPredefined: false
+    }
+
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        console.log(result)
+        if (result) {
+            obj.userId = result._id
+            db.collection('Fasts').insertOne(obj, (error2, result2) => {
+                if (error2) {
+                    err.meta.message = error2
+                    res.status(500).send(err)
+                    return
+                }
+                console.log(result2.result)
+                if (result2.result.ok) {
+                    err.meta.message = "Succesfully entered Fast"
+                    err.meta.status = true
+                    res.status(200).send(err)
+                }
+                else {
+                    err.meta.message = "Entry failed"
+                    err.meta.status = false
+                    res.status(500).send(err)
+                }
+            })
+        }
+        else {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+        }
+    })
+})
+
+app.post('/log', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    if (req.body.date == undefined || req.body.date == "") {
+        err.meta.message = "Please specify a date."
+        res.status(400).send(err)
+        return
+    }
+
+    if (req.body.time == undefined || req.body.time == "") {
+        err.meta.message = "Please specify a time."
+        res.status(400).send(err)
+        return
+    }
+
+    if (req.body.food == undefined || req.body.food == "") {
+        err.meta.message = "Please specify a food."
+        res.status(400).send(err)
+        return
+    }
+
+    if (req.body.qty == undefined || req.body.qty == "") {
+        err.meta.message = "Please specify qty."
+        res.status(400).send(err)
+        return
+    }
+
+    var obj = {
+        date: req.body.date,
+        time: req.body.time,
+        food: req.body.food,
+        qty: req.body.qty
+    }
+
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        console.log(result)
+        if (result) {
+            obj.userId = result._id
+            db.collection('logs').insertOne(obj, (error2, result2) => {
+                if (error2) {
+                    err.meta.message = error2
+                    res.status(500).send(err)
+                    return
+                }
+                console.log(result2.result)
+                if (result2.result.ok) {
+                    err.meta.message = "Succesfully entered Log"
+                    err.meta.status = true
+                    res.status(200).send(err)
+                }
+                else {
+                    err.meta.message = "Entry failed"
+                    err.meta.status = false
+                    res.status(500).send(err)
+                }
+            })
+        }
+        else {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+        }
+    })
+})
+
 
 
 app.put('/logout', (req, res) => {
