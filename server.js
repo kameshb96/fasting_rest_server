@@ -497,6 +497,47 @@ app.post('/log', (req, res) => {
     })
 })
 
+app.get('/logs', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        if (!result) {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+            return
+        }
+        let id = result._id
+        db.collection('logs').find({ userId: id }).toArray((e, r) => {
+            if (e) {
+                err.meta.message = e
+                res.status(500).send(err)
+                return
+            }
+            err.meta.message = "Success"
+            err.meta.status = true
+            err.data = {
+                logs: r
+            }
+            res.status(200).send(err)
+        })
+    })
+})
+
 
 
 app.put('/logout', (req, res) => {
