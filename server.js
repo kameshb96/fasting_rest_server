@@ -365,6 +365,58 @@ app.get('/fasts', (req, res) => {
     })
 })
 
+app.delete('/fast', (req,  res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+
+    if (req.body.title == undefined || req.body.title == "") {
+        err.meta.message = "Please specify a title for the fast"
+        res.status(400).send(err)
+        return
+    }
+
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        if (!result) {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+            return
+        }
+        let id = result._id
+        db.collection('Fasts').deleteOne({ userId: id, title: req.body.title }, (e, r) => {
+            if (e) {
+                err.meta.message = e
+                res.status(500).send(err)
+                return
+            }
+            if(r.deletedCount > 0) {
+                err.meta.message = "Success"
+                err.meta.status = true
+                res.status(200).send(err)
+            }
+            else {
+                err.meta.message = "No fast found"
+                err.meta.status = false
+                res.status(404).send(err)
+            }
+        })
+    })
+})
+
 app.post('/log', (req, res) => {
     let err = {
         meta: {
