@@ -167,7 +167,8 @@ app.get('/completedFasts', (req, res) => {
             }
             err.meta.message = "Success"
             err.meta.status = true
-            res.status(200).send(r)
+            err.data = r
+            res.status(200).send(err)
         })
     })
 
@@ -201,7 +202,7 @@ app.post('/completedFast', (req, res) => {
             message: ""
         }
     }
-    if (req.body.chosenFast == undefined || req.body.chosenFast == "") {
+    if (req.body.fast == undefined || req.body.fast == "") {
         err.meta.message = "No fast chosen. Please choose a fast."
         res.status(400).send(err)
         return
@@ -213,7 +214,7 @@ app.post('/completedFast', (req, res) => {
         return
     }
     var obj = {
-        chosenFast: req.body.chosenFast,
+        fast: req.body.fast,
         fastStartTime: req.body.fastStartTime
     }
     let st = req.headers.sessiontoken
