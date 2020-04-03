@@ -449,11 +449,25 @@ app.post('/log', (req, res) => {
         return
     }
 
+    if (req.body.unit == undefined || req.body.unit == "") {
+        err.meta.message = "Please specify unit."
+        res.status(400).send(err)
+        return
+    }
+
+    if (req.body.cal == undefined || req.body.cal == "") {
+        err.meta.message = "Please specify calories."
+        res.status(400).send(err)
+        return
+    }
+
     var obj = {
         date: req.body.date,
         time: req.body.time,
         food: req.body.food,
-        qty: req.body.qty
+        qty: req.body.qty,
+        unit: req.body.unit,
+        cal: req.body.cal
     }
 
     let st = req.headers.sessiontoken
