@@ -658,9 +658,6 @@ app.delete('/log', (req,  res) => {
     })
 })
 
-
-
-
 app.put('/logout', (req, res) => {
     let err = {
         meta: {
@@ -709,13 +706,13 @@ app.put('/timerinfo', (req, res) => {
         }
     }
     //req.body is obj. obj two fields: chosenFast and fastStartTime
-    if (req.body.chosenFast == undefined || req.body.chosenFast == "") {
+    if (req.body.chosenFast == undefined) {
         err.meta.message = "No fast chosen. Please choose a fast."
         res.status(400).send(err)
         return
     }
 
-    if (req.body.fastStartTime == undefined || req.body.fastStartTime == "") {
+    if (req.body.fastStartTime == undefined) {
         err.meta.message = "No fastStartTime provided."
         res.status(400).send(err)
         return
@@ -751,6 +748,44 @@ app.put('/timerinfo', (req, res) => {
             err.meta.status = true
             err.meta.message = "TimerInfo updated"
             res.status(200).send(err)
+        })
+})
+
+app.get('/timerinfo', (req, res) => {
+    //console.log(req.headers.sessiontoken)
+    //console.log(req.headers)
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOne({ sessionToken: st },
+        (error, result) => {
+            if (error) {
+                err.meta.message = error
+                res.status(500).send(err)
+                return
+            }
+            console.log("RESULT:", result)
+            if(result && result.timerInfo)  { 
+                err.data = result.timerInfo
+                err.meta.status = true
+                err.meta.message = "Got timerInfo"          
+                res.status(200).send(err)
+            }
+            else {
+                err.data = null
+                err.meta.status = false
+                err.meta.message = "No timerInfo found"
+                res.status(404).send(err)
+            }
         })
 })
 
