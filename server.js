@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser')
-const {ObjectId} = require('mongodb');
+const { ObjectId } = require('mongodb');
 const app = express();
 var cors = require('cors');
 let fetch = require('node-fetch');
@@ -134,6 +134,80 @@ app.post('/login', (req, res) => {
         })
 })
 
+app.get('/password', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOne({ sessionToken: st }, (error, result) => {
+        if (error) {
+            err.meta.message = error
+            res.status(500).send(err)
+            return
+        }
+        if (!result) {
+            err.meta.message = "Invalid sessionToken"
+            res.status(403).send(err)
+            return
+        }
+        password = result.password
+        err.meta.message = "Succesfully Retrieved Password"
+        err.meta.status = true
+        err.data = password
+        res.status(200).send(err)
+    })
+})
+
+app.put('/password', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    if (req.body.newPassword == undefined || req.body.newPassword == "") {
+        err.meta.message = "Please enter a new password"
+        res.status(400).send(err)
+        return
+    }
+
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOneAndUpdate({ sessionToken: st },
+        {
+            $set: {
+                password: req.body.newPassword
+            }
+        },
+        (error, result) => {
+            if (error) {
+                err.meta.message = error
+                res.status(500).send(error)
+                return
+            }
+            if (!result.lastErrorObject.updatedExisting) {
+                err.meta.message = "Invalid sessionToken"
+                res.status(403).send(err)
+                return
+            }
+            err.meta.status = true
+            err.meta.message = "Sucessfully Changed Password"
+            res.status(200).send(err)
+        })
+})
+
 app.get('/completedFasts', (req, res) => {
     let err = {
         meta: {
@@ -186,7 +260,7 @@ app.get('/validateToken', (req, res) => {
             return
         }
         console.log(result)
-        if(!result) {
+        if (!result) {
             res.status(403).send({})
         }
         else {
@@ -258,7 +332,7 @@ app.post('/completedFast', (req, res) => {
     })
 })
 
-app.delete('/completedFast', (req,  res) => {
+app.delete('/completedFast', (req, res) => {
     let err = {
         meta: {
             status: false,
@@ -296,7 +370,7 @@ app.delete('/completedFast', (req,  res) => {
                 res.status(500).send(err)
                 return
             }
-            if(r.deletedCount > 0) {
+            if (r.deletedCount > 0) {
                 err.meta.message = "Success"
                 err.meta.status = true
                 res.status(200).send(err)
@@ -419,7 +493,7 @@ app.get('/fasts', (req, res) => {
     })
 })
 
-app.delete('/fast', (req,  res) => {
+app.delete('/fast', (req, res) => {
     let err = {
         meta: {
             status: false,
@@ -457,7 +531,7 @@ app.delete('/fast', (req,  res) => {
                 res.status(500).send(err)
                 return
             }
-            if(r.deletedCount > 0) {
+            if (r.deletedCount > 0) {
                 err.meta.message = "Success"
                 err.meta.status = true
                 res.status(200).send(err)
@@ -606,7 +680,7 @@ app.get('/logs', (req, res) => {
     })
 })
 
-app.delete('/log', (req,  res) => {
+app.delete('/log', (req, res) => {
     let err = {
         meta: {
             status: false,
@@ -644,7 +718,7 @@ app.delete('/log', (req,  res) => {
                 res.status(500).send(err)
                 return
             }
-            if(r.deletedCount > 0) {
+            if (r.deletedCount > 0) {
                 err.meta.message = "Success"
                 err.meta.status = true
                 res.status(200).send(err)
@@ -774,10 +848,10 @@ app.get('/timerinfo', (req, res) => {
                 return
             }
             console.log("RESULT:", result)
-            if(result && result.timerInfo)  { 
+            if (result && result.timerInfo) {
                 err.data = result.timerInfo
                 err.meta.status = true
-                err.meta.message = "Got timerInfo"          
+                err.meta.message = "Got timerInfo"
                 res.status(200).send(err)
             }
             else {
@@ -792,15 +866,15 @@ app.get('/timerinfo', (req, res) => {
 app.get('/search', (req, res) => {
     console.log(req.query)
     console.log(req.query.q)
-    if(!req.query || !req.query.q) {
+    if (!req.query || !req.query.q) {
         res.send([])
         return
     }
-    let tmp=`https://trackapi.nutritionix.com/v2/search/instant?query=${encodeURIComponent(req.query.q)}&common=false`
+    let tmp = `https://trackapi.nutritionix.com/v2/search/instant?query=${encodeURIComponent(req.query.q)}&common=false`
     console.log(tmp)
     fetch(tmp, {
         method: 'GET',
-        headers: { 
+        headers: {
             'Content-Type': 'application/json',
             'x-app-id': 'f6038e67',
             'x-app-key': '348bcbd07ddc7334af71c1eddefa65f9'
