@@ -80,6 +80,42 @@ app.post('/register', (req, res) => {
     })
 })
 
+app.get('/settings', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: ""
+        }
+    }
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOne({ sessionToken: st },
+        (error, result) => {
+            if (error) {
+                err.meta.message = error
+                res.status(500).send(err)
+                return
+            }
+            console.log("RESULT:", result)
+            if (result && result.settings) {
+                err.data = result.settings
+                err.meta.status = true
+                err.meta.message = "Got Settings"
+                res.status(200).send(err)
+            }
+            else {
+                err.data = null
+                err.meta.status = false
+                err.meta.message = "No settings found"
+                res.status(404).send(err)
+            }
+        })
+})
+
 app.put('/settings', (req, res) => {
     let err = {
         meta: {
