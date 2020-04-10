@@ -44,7 +44,11 @@ app.post('/register', (req, res) => {
     }
     var obj = {
         username: req.body.username.trim(),
-        password: req.body.password
+        password: req.body.password,
+        settings: {
+            notifications: false,
+            dark: false
+        }
     }
     if (!validateEmail(obj.username)) {
         res.status(400).send(err)
@@ -74,6 +78,53 @@ app.post('/register', (req, res) => {
         })
 
     })
+})
+
+app.put('/settings', (req, res) => {
+    let err = {
+        meta: {
+            status: false,
+            message: "Invalid Username"
+        }
+    }
+    if (
+        req.body.settings == undefined ||
+        req.body.settings.notifications == undefined ||
+        req.body.settings.dark == undefined
+    ) {
+        err.meta.message = "Settings object is not defined"
+        res.status(400).send(err)
+        return;
+    }
+    let st = req.headers.sessiontoken
+    if (st == undefined || st == "") {
+        err.meta.message = "Please login again"
+        res.status(403).send(err)
+        return
+    }
+    db.collection('users').findOneAndUpdate({ sessionToken: st },
+        {
+            $set: {
+                settings: req.body.settings
+            }
+        },
+        (error, result) => {
+            if (error) {
+                err.meta.message = error
+                res.status(500).send(err)
+                return
+            }
+            if (!result.lastErrorObject.updatedExisting) {
+                err.meta.message = "Invalid sessionToken"
+                res.status(403).send(err)
+                return
+            }
+            console.log("RESULT:", result)
+            err.meta.status = true
+            err.meta.message = "Settings updated"
+            res.status(200).send(err)
+        })
+
 })
 
 app.post('/login', (req, res) => {
