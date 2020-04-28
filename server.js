@@ -15,6 +15,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
 var quotes;
 var db;
+var port = process.env.PORT || 3000;
 app.get("/", function (req, res) {
     // console.log(req);
     // console.log(res);
@@ -1029,8 +1030,8 @@ MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
     },
         { upsert: true, multi: true }).then(r => {
             console.log(db)
-            app.listen(3500, function () {
-                console.log('listening on 3500')
+            app.listen(port, '0.0.0.0', function () {
+                console.log(`listening on ${port}`)
             });
         })
 })
