@@ -5,7 +5,8 @@ const app = express();
 var cors = require('cors');
 let fetch = require('node-fetch');
 const MongoClient = require('mongodb').MongoClient
-const url = 'mongodb://127.0.0.1:27017'
+// const url = 'mongodb://127.0.0.1:27017'
+const url = 'mongodb+srv://kameshb:kamkes5961@cluster0-l1p9l.mongodb.net/test?retryWrites=true&w=majority'
 app.use(bodyParser.json())
 app.use(express.static('public'))
 // app.set('view engine', 'ejs')
