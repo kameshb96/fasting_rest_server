@@ -50,6 +50,10 @@ app.post('/register', (req, res) => {
         settings: {
             notifications: false,
             dark: false
+        },
+        timerInfo: {
+            chosenFast: {},
+            fastStartTime: ""
         }
     }
     if (!validateEmail(obj.username)) {
